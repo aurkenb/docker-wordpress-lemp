@@ -1,0 +1,63 @@
+version: '3'
+services:
+
+  wordpress:
+    image: wordpress:${WORDPRESS_VERSION:-php7.4-fpm}
+    container_name: wordpress
+    depends_on:
+      - mysql
+    environment:
+      - WORDPRESS_TABLE_PREFIX=${WORDPRESS_TABLE_PREFIX:-wp_}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME:-wordpress}      
+      - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST:-mysql}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER:-wordpress}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD:-password}
+    volumes:
+      - ./config/php/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
+      - ${WORDPRESS_DIR:-./core/wordpress}:/var/www/html
+    restart: always  
+    networks:
+      - wordpress-network
+      
+  mysql:
+    image: mysql:${MYSQL_VERSION:-latest}
+    container_name: mysql
+    volumes:
+      - ${MYSQL_DIR:-./core/mysql}:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-wordpress}
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+      - MYSQL_ALLOW_EMPTY_PASSWORD=${MYSQL_ALLOW_EMPTY_PASSWORD:-no}
+    restart: always
+    networks:
+      - wordpress-network
+
+  nginx:
+    build: 
+      context: ./config/nginx
+      args:
+        - NGINX_IMAGE=nginx:${NGINX_VERSION:-latest}
+        - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+    container_name: nginx
+    depends_on:
+      - wordpress
+    ports:
+      - '${NGINX_HTTP_PORT:-80}:80'
+      - '${NGINX_HTTPS_PORT:-443}:443'
+    volumes:
+      - ${WORDPRESS_DIR:-./core/wordpress}:/var/www/html
+      - ${NGINX_LOG_DIR:-./core/logs/nginx}:/var/log/nginx
+      - ${CERTS_DIR:-./core/certs}:/etc/letsencrypt
+    restart: always
+    networks:
+      - wordpress-network
+      
+volumes:
+  mysql: {}
+  wordpress: {}      
+
+networks:
+  wordpress-network:
+    driver: bridge

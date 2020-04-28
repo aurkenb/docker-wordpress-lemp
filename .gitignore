@@ -1,0 +1,3 @@
+.env
+core/*
+config/nginx/default.conf
