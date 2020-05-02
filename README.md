@@ -24,12 +24,18 @@ cp ./config/nginx/templates/http.conf ./config/nginx/default.conf
 
 Adjust `DOMAIN_NAME` and other variables in `.env`:
 ```
-DOMAIN_NAME=aurken.dev
+DOMAIN_NAME=localhost.example
 
 NGINX_HTTP_PORT=80
 NGINX_HTTPS_PORT=443
 ...
 ```
+
+Map `DOMAIN_NAME` to 127.0.0.1
+```
+echo "127.0.0.1 localhost.example" | sudo tee -a /etc/hosts
+```
+
 
 Ready to go:
 ```
